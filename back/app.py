@@ -14,7 +14,10 @@ if not os.path.exists('dados.csv'):
             "tempo_resposta",
             "acerto",
             "set_size",
-            "target"
+            "target",
+            "difficulty",
+            "invalid",
+            "total_time"
         ])
 
 @app.route('/save', methods=['POST'])
@@ -30,7 +33,10 @@ def save_data():
                 trial.get("rt"),
                 trial.get("correct"),
                 trial.get("set_size"),
-                trial.get("target")
+                trial.get("target"),
+                trial.get("difficulty"),
+                trial.get("invalid"),
+                trial.get("total_time")
             ])
 
     return jsonify({"status": "success"})

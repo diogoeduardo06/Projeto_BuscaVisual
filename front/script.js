@@ -1,18 +1,19 @@
-// Captura ID do participante (via URL)
 const urlParams = new URLSearchParams(window.location.search);
 let participant_id = urlParams.get("id");
 
-// Se não tiver ID, cria um automático
 if (!participant_id) {
   participant_id = "P" + Math.floor(Math.random() * 1000000);
 }
 
-// Função para gerar estímulos
-function generateStimuli(size, targetPresent = true) {
+// Tempo total
+const inicio = Date.now();
+
+// Gerar estímulos
+function generateStimuli(size, targetPresent, difficulty) {
   let letters = [];
 
   for (let i = 0; i < size; i++) {
-    letters.push("L");
+    letters.push(difficulty === "hard" ? "I" : "L");
   }
 
   if (targetPresent) {
@@ -20,56 +21,97 @@ function generateStimuli(size, targetPresent = true) {
     letters[index] = "T";
   }
 
-  return `<div style="font-size:30px; text-align:center;">
-            ${letters.join(" ")}
-          </div>`;
+  return `
+  <div style="
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:80vh;
+    font-size:32px;
+    letter-spacing:10px;
+  ">
+    ${letters.join(" ")}
+  </div>`;
 }
 
-// Criar trials
-function createTrial(setSize, target) {
+// Criar trial
+function createTrial(setSize, target, difficulty) {
   return {
     type: jsPsychHtmlKeyboardResponse,
-    stimulus: generateStimuli(setSize, target),
-    choices: ["f", "j"], // f = não tem alvo | j = tem alvo
+    stimulus: generateStimuli(setSize, target, difficulty),
+    choices: ["f", "j"],
     trial_duration: 4000,
     data: {
       participant: participant_id,
       set_size: setSize,
-      target: target
+      target: target,
+      difficulty: difficulty
     },
     on_finish: function(data) {
       data.correct = (data.response === "j" && target) ||
                      (data.response === "f" && !target);
+
+      if (data.rt < 200) {
+        data.invalid = true;
+      }
     }
   };
 }
 
-// Timeline
 let timeline = [];
 
-// Tela inicial
+// Tela de instruções
 timeline.push({
   type: jsPsychHtmlKeyboardResponse,
-  stimulus: "<p>Pressione qualquer tecla para iniciar</p>"
+  stimulus: `
+    <h2>Experimento de Busca Visual</h2>
+    <p>Pressione <b>J</b> se encontrar a letra T</p>
+    <p>Pressione <b>F</b> se NÃO encontrar</p>
+    <p>Responda o mais rápido possível</p>
+    <p><b>Pressione qualquer tecla para começar</b></p>
+  `
 });
 
-// Trials com diferentes condições
+// Treino
+timeline.push({
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: "<p>Treino: pressione J se tiver T, F se não tiver</p>"
+});
+
+timeline.push(createTrial(10, true, "easy"));
+timeline.push(createTrial(10, false, "easy"));
+
+// Trials principais
 const setSizes = [10, 30, 60];
+const difficulties = ["easy", "hard"];
+const repeticoes = 5;
 
 setSizes.forEach(size => {
-  timeline.push(createTrial(size, true));
-  timeline.push(createTrial(size, false));
+  difficulties.forEach(diff => {
+    for (let i = 0; i < repeticoes; i++) {
+      timeline.push(createTrial(size, true, diff));
+      timeline.push(createTrial(size, false, diff));
+    }
+  });
 });
 
-// Randomizar
+// Randomização
 timeline = jsPsych.randomization.shuffle(timeline);
 
-// Inicializar experimento
+// Finalização
 jsPsych.init({
   timeline: timeline,
-
   on_finish: function() {
-    const dados = jsPsych.data.get().values();
+
+    const fim = Date.now();
+    const duracao = fim - inicio;
+
+    let dados = jsPsych.data.get().values();
+
+    dados = dados.map(d => ({
+      ...d,
+      total_time: duracao
+    }));
 
     fetch("https://buscavisual.onrender.com/save", {
       method: "POST",
