@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
+    }
+
+    form {
+      background:#1e293b;
+      padding:30px;
+      border-radius:10px;
+      width:320px;
+    }
+
+    input, select, button {
+      width:100%;
+      margin:8px 0;
+      padding:10px;
+      border-radius:6px;
+      border:none;
+    }
+
+    button {
+      background:#22c55e;
+      color:white;
+      cursor:pointer;
+      font-weight:bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<form id="form">
+  <h2>Informações do Participante</h2>
+
+  <input name="idade" placeholder="Idade" required>
+
+  <select name="sexo">
+    <option value="M">Masculino</option>
+    <option value="F">Feminino</option>
+    <option value="Outro">Outro</option>
+  </select>
+
+  <input name="sono" placeholder="Horas de sono">
+
+  <select name="cafeina">
+    <option value="Sim">Consumiu cafeína</option>
+    <option value="Não">Não consumiu</option>
+  </select>
+
+  <select name="jogos">
+    <option value="Sim">Joga videogame</option>
+    <option value="Não">Não joga</option>
+  </select>
+
+  <select name="oculos">
+    <option value="Sim">Usa óculos</option>
+    <option value="Não">Não usa</option>
+  </select>
+
+  <button type="submit">Iniciar Experimento</button>
+</form>
+
+<script>
+document.getElementById("form").addEventListener("submit", function(e){
+  e.preventDefault();
+
+  const data = new FormData(this);
+  const params = new URLSearchParams(data);
+
+  params.append("id", "P" + Math.floor(Math.random()*100000));
+
+  window.location.href = "index.html?" + params.toString();
+});
+</script>
+
+</body>
+</html>

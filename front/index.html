@@ -2,75 +2,70 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Experimento de Busca Visual</title>
+  <title>Experimento</title>
 
   <script src="https://unpkg.com/jspsych@7.3.0"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
-  <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@1.1.2"></script>
 
   <script src="script.js" defer></script>
 
   <style>
     body {
-      margin: 0;
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
-      text-align: center;
+      margin:0;
+      font-family:Arial;
+      background:#0f172a;
+      color:white;
+      text-align:center;
     }
 
     #container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
+      display:flex;
+      flex-direction:column;
+      height:100vh;
     }
 
-    header {
-      background: #1e293b;
-      padding: 10px;
+    header, footer {
+      background:#1e293b;
+      padding:10px;
     }
 
     #progress-bar {
-      height: 8px;
-      background: #334155;
-      border-radius: 5px;
-      overflow: hidden;
-      margin-top: 5px;
+      height:8px;
+      background:#334155;
+      border-radius:5px;
+      overflow:hidden;
+      margin-top:5px;
     }
 
     #progress {
-      height: 100%;
-      width: 0%;
-      background: #22c55e;
+      height:100%;
+      width:0%;
+      background:#22c55e;
     }
 
     #jspsych-target {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      flex:1;
+      display:flex;
+      justify-content:center;
+      align-items:center;
     }
 
     .start-btn {
-      padding: 15px 30px;
-      font-size: 18px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    footer {
-      background: #1e293b;
-      padding: 10px;
+      padding:15px 30px;
+      font-size:18px;
+      border-radius:10px;
+      background:#22c55e;
+      color:white;
+      border:none;
+      cursor:pointer;
     }
   </style>
 </head>
 
 <body>
   <div id="container">
+
     <header>
       Experimento de Atenção Visual
       <div id="progress-bar">
@@ -81,8 +76,9 @@
     <div id="jspsych-target"></div>
 
     <footer>
-      J = TEM alvo | F = NÃO TEM
+      J = TEM | F = NÃO TEM
     </footer>
+
   </div>
 </body>
 </html>
