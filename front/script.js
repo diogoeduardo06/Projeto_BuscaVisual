@@ -135,7 +135,7 @@ function createTrial(setSize, target, difficulty) {
 // Timeline
 let timeline = [];
 
-// ✅ BOTÃO FUNCIONANDO + CENTRALIZADO
+// botão para start
 timeline.push({
   type: jsPsychHtmlButtonResponse,
   stimulus: `
@@ -147,24 +147,32 @@ timeline.push({
     </div>
   `,
   choices: ["Iniciar Experimento"],
-  button_html: `
-    <button style="
-      padding:15px 30px;
-      font-size:18px;
-      border:none;
-      border-radius:12px;
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color:white;
-      cursor:pointer;
-      margin-top:20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    ">
-      %choice%
-    </button>
-  `
+
+  // 🔥 CORREÇÃO AQUI
+  button_html: (choice) => {
+    return `
+      <button style="
+        padding:15px 30px;
+        font-size:18px;
+        border:none;
+        border-radius:12px;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color:white;
+        cursor:pointer;
+        margin-top:20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        transition: 0.2s;
+      "
+      onmouseover="this.style.transform='scale(1.05)'"
+      onmouseout="this.style.transform='scale(1)'"
+      >
+        ${choice}
+      </button>
+    `;
+  }
 });
 
-// ⏳ Contagem
+// Contagem
 const countdown = [
   "Prepare-se...",
   "3",
