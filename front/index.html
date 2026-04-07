@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
   <meta charset="UTF-8">
   <title>Experimento de Busca Visual</title>
@@ -8,14 +7,15 @@
   <script src="https://unpkg.com/jspsych@7.3.0"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@1.1.2"></script>
 
   <script src="script.js" defer></script>
 
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #0f172a;
+      font-family: Arial;
+      background: #0f172a;
       color: white;
       text-align: center;
     }
@@ -23,29 +23,26 @@
     #container {
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      height: 90vh;
+      height: 100vh;
     }
 
     header {
-      padding: 10px;
-      font-size: 18px;
       background: #1e293b;
+      padding: 10px;
     }
 
     #progress-bar {
       height: 8px;
       background: #334155;
-      margin-top: 5px;
       border-radius: 5px;
       overflow: hidden;
+      margin-top: 5px;
     }
 
     #progress {
       height: 100%;
       width: 0%;
       background: #22c55e;
-      transition: width 0.3s;
     }
 
     #jspsych-target {
@@ -58,24 +55,16 @@
     .start-btn {
       padding: 15px 30px;
       font-size: 18px;
-      border: none;
       border-radius: 12px;
       background: linear-gradient(135deg, #22c55e, #16a34a);
       color: white;
+      border: none;
       cursor: pointer;
-      margin-top: 20px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-      transition: 0.2s;
-    }
-
-    .start-btn:hover {
-      transform: scale(1.05);
     }
 
     footer {
-      padding: 10px;
-      font-size: 14px;
       background: #1e293b;
+      padding: 10px;
     }
   </style>
 </head>
@@ -92,9 +81,8 @@
     <div id="jspsych-target"></div>
 
     <footer>
-      Pressione <b>J</b> = TEM alvo | <b>F</b> = NÃO TEM
+      J = TEM alvo | F = NÃO TEM
     </footer>
   </div>
 </body>
-
 </html>
