@@ -5,6 +5,7 @@ if (!participant_id) {
   participant_id = "P" + Math.floor(Math.random() * 1000000);
 }
 
+
 // Tempo total
 const inicio = Date.now();
 
@@ -99,8 +100,7 @@ setSizes.forEach(size => {
 timeline = jsPsych.randomization.shuffle(timeline);
 
 // Finalização
-jsPsych.init({
-  timeline: timeline,
+const jsPsych = initJsPsych({
   on_finish: function() {
 
     const fim = Date.now();
@@ -128,3 +128,5 @@ jsPsych.init({
     });
   }
 });
+
+jsPsych.run(timeline);
