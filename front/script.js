@@ -4,6 +4,7 @@ const jsPsych = initJsPsych({
   on_finish: salvarDados
 });
 
+const surveyPlugin = window.jsPsychSurveyHtmlForm || window.jsPsychHtmlSurveyForm;
 let total_trials = 0;
 
 // progresso
@@ -135,7 +136,7 @@ function createBlock(withDistraction, label) {
 let timeline = [];
 
 timeline.push({
-  type: "survey-html-form",
+  type: surveyPlugin,
   html: `
     <h2>Informações</h2>
 
