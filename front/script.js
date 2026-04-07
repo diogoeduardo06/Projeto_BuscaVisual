@@ -13,12 +13,11 @@ const perfil = {
   oculos: urlParams.get("oculos"),
 };
 
-// GERAR GRID COM DIFICULDADE REAL
+// GERAR GRID
 function generateStimuli(size, target, difficulty, distraction){
   const cols = Math.ceil(Math.sqrt(size));
   let elements = [];
 
-  // Distratores por dificuldade
   const easyDistractors = ["L","I","F","E"];
   const hardDistractors = ["I","L","F"];
 
@@ -30,23 +29,22 @@ function generateStimuli(size, target, difficulty, distraction){
     }
   }
 
-  // Inserir alvo
   if(target){
     const index = Math.floor(Math.random()*size);
-    elements[index] = "T"; // sem destaque
+    elements[index] = "T";
   }
 
-  // Distratores visuais animados
   let visualDistractors = "";
   if(distraction){
-    for(let i=0;i<10;i++){ // 10 distractores
+    const nDistractors = difficulty === "easy" ? 5 : 12;
+    for(let i=0;i<nDistractors;i++){
       visualDistractors += `
       <div style="
         position:absolute;
-        width:30px;
-        height:30px;
+        width:25px;
+        height:25px;
         border-radius:50%;
-        background:rgba(255,255,0,0.4); /* amarelo suave */
+        background:rgba(255,255,0,${difficulty==="easy"?0.2:0.4});
         top:${Math.random()*90}%;
         left:${Math.random()*90}%;
         animation:flash 0.6s infinite alternate;
@@ -82,21 +80,17 @@ function generateStimuli(size, target, difficulty, distraction){
 // CRIAR TRIAL
 function createTrial(size, target, difficulty, distraction, blockIndex, trialIndex){
   return [
-    // Estímulo (sem limite de tempo)
     {
       type:"html-keyboard-response",
       stimulus:generateStimuli(size,target,difficulty,distraction),
       choices:["f","j"],
       response_ends_trial: true,
       data:{size,target,difficulty,distraction,block:blockIndex,trial:trialIndex},
-
       on_finish:function(data){
         data.correct = (data.response === "j" && target) || (data.response === "f" && !target);
         data.timestamp = Date.now();
       }
     },
-
-    // Feedback
     {
       type:"html-keyboard-response",
       stimulus:function(){
@@ -107,39 +101,44 @@ function createTrial(size, target, difficulty, distraction, blockIndex, trialInd
         return d.correct ? "<p style='color:green'>Correto</p>" : "<p style='color:red'>Errado</p>";
       },
       choices: jsPsych.NO_KEYS,
-      trial_duration:600
+      trial_duration:400
     }
   ];
 }
 
-// CRIAR BLOCO
+// CRIAR BLOCO COM DIFICULDADE GRADATIVA E RANDOMIZAÇÃO CONTROLADA
 function createBlock(distraction,label,blockIndex){
-  let block = [];
-
-  block.push({
+  let block = [{
     type:"html-keyboard-response",
     stimulus:`<h2>${label}</h2><p>Pressione qualquer tecla</p>`
-  });
+  }];
+
+  let sizes = [10,20,30]; // pequeno -> grande
+  let difficulties = ["easy","hard"]; // fácil -> difícil
 
   let trials = [];
-  [10,30,60].forEach(size=>{
-    ["easy","hard"].forEach(diff=>{
-      for(let i=0;i<5;i++){
-        trials.push(...createTrial(size,true,diff,distraction,blockIndex,trials.length));
-        trials.push(...createTrial(size,false,diff,distraction,blockIndex,trials.length));
-      }
+
+  // gerar trials por dificuldade e tamanho
+  sizes.forEach(size=>{
+    difficulties.forEach(diff=>{
+      [true,false].forEach(target=>{
+        trials.push(createTrial(size,target,diff,distraction,blockIndex,trials.length));
+      });
     });
   });
 
-  // randomização real
-  trials = trials.sort(()=>Math.random()-0.5);
-  return block.concat(trials);
+  // "embaralhar" dentro de cada nível de dificuldade para não ser previsível
+  let shuffled = [];
+  trials.forEach(trialGroup=>{
+    shuffled.push(...trialGroup.sort(()=>Math.random()-0.5));
+  });
+
+  return block.concat(shuffled);
 }
 
 // TIMELINE
 let timeline = [];
 
-// botão início
 timeline.push({
   type:"html-button-response",
   stimulus:"<h2>Preparado?</h2>",
@@ -152,27 +151,23 @@ timeline.push({
     type:"html-keyboard-response",
     stimulus:`<h1>${t}</h1>`,
     choices: jsPsych.NO_KEYS,
-    trial_duration:700
+    trial_duration:500
   });
 });
 
-// ordem aleatória dos blocos
+// ordem aleatória dos blocos (com e sem estímulos)
 let blocos = Math.random()>0.5
   ? [createBlock(false,"Sem estímulo",0), createBlock(true,"Com estímulo",1)]
   : [createBlock(true,"Com estímulo",0), createBlock(false,"Sem estímulo",1)];
 
 blocos.forEach((b,i)=>{
   timeline = timeline.concat(b);
-
   if(i===0){
-    timeline.push({
-      type:"html-keyboard-response",
-      stimulus:"<h2>Pausa</h2>"
-    });
+    timeline.push({type:"html-keyboard-response", stimulus:"<h2>Pausa</h2>"});
   }
 });
 
-// SALVAR DADOS
+// SALVAR
 async function salvar(){
   let dados = jsPsych.data.get().values().map(d => ({...d, ...perfil}));
   try {
@@ -188,7 +183,7 @@ async function salvar(){
   }
 }
 
-// INICIAR JSPSYCH
+// INICIAR
 jsPsych.init({
   display_element:"jspsych-target",
   timeline: timeline,
