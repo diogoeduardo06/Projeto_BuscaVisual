@@ -5,11 +5,13 @@ if (!participant_id) {
   participant_id = "P" + Math.floor(Math.random() * 1000000);
 }
 
-// Tempo total
 const inicio = Date.now();
 
-// Criar instância do jsPsych PRIMEIRO
+// jsPsych init
 const jsPsych = initJsPsych({
+  on_trial_finish: function() {
+    updateProgress();
+  },
   on_finish: function() {
 
     const fim = Date.now();
@@ -24,53 +26,79 @@ const jsPsych = initJsPsych({
 
     fetch("https://buscavisual.onrender.com/save", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: {"Content-Type": "application/json"},
       body: JSON.stringify(dados)
-    })
-    .then(() => {
-      document.body.innerHTML = "<h2>Obrigado pela participação!</h2>";
-    })
-    .catch(() => {
-      document.body.innerHTML = "<h2>Erro ao salvar os dados</h2>";
     });
+
+    document.body.innerHTML = "<h2>Obrigado pela participação!</h2>";
   }
 });
 
-// Gerar estímulos
+// Progress bar
+function updateProgress() {
+  const total = jsPsych.timelineVariable("total_trials", true) || 1;
+  const current = jsPsych.data.get().count();
+  const percent = Math.min((current / total) * 100, 100);
+
+  document.getElementById("progress").style.width = percent + "%";
+}
+
+// Grid de estímulos
 function generateStimuli(size, targetPresent, difficulty) {
-  let letters = [];
+  let elements = [];
 
   for (let i = 0; i < size; i++) {
-    letters.push(difficulty === "hard" ? "I" : "L");
+    const isDistractor = Math.random() < 0.2;
+
+    elements.push(`
+      <div style="
+        font-size:28px;
+        color:${isDistractor ? "#ef4444" : "#e2e8f0"};
+        animation:${isDistractor ? "blink 0.6s infinite" : "none"};
+      ">
+        ${difficulty === "hard" ? "I" : "L"}
+      </div>
+    `);
   }
 
   if (targetPresent) {
     const index = Math.floor(Math.random() * size);
-    letters[index] = "T";
+    elements[index] = `<div style="color:#22c55e; font-size:32px;">T</div>`;
   }
 
   return `
+  <style>
+    @keyframes blink {
+      50% { opacity: 0.3; }
+    }
+  </style>
+
   <div style="
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:80vh;
-    font-size:32px;
-    letter-spacing:10px;
+    display:grid;
+    grid-template-columns: repeat(${Math.ceil(Math.sqrt(size))}, 1fr);
+    gap:10px;
+    width:400px;
+    margin:auto;
   ">
-    ${letters.join(" ")}
+    ${elements.join("")}
   </div>`;
 }
 
-// Criar trial
+// Trial com fixação + estímulo + feedback
 function createTrial(setSize, target, difficulty) {
-  return {
+
+  const fixation = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `<div style="font-size:40px;">+</div>`,
+    choices: "NO_KEYS",
+    trial_duration: 700
+  };
+
+  const stimulus = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: generateStimuli(setSize, target, difficulty),
     choices: ["f", "j"],
-    trial_duration: 4000,
+    trial_duration: 3000,
     data: {
       participant: participant_id,
       set_size: setSize,
@@ -80,15 +108,25 @@ function createTrial(setSize, target, difficulty) {
     on_finish: function(data) {
       data.correct = (data.response === "j" && target) ||
                      (data.response === "f" && !target);
-
-      if (data.rt < 200) {
-        data.invalid = true;
-      }
     }
   };
+
+  const feedback = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: function() {
+      const last = jsPsych.data.get().last(1).values()[0];
+      return `<div style="font-size:24px; color:${last.correct ? "#22c55e" : "#ef4444"};">
+                ${last.correct ? "✔ Correto" : "✖ Errado"}
+              </div>`;
+    },
+    choices: "NO_KEYS",
+    trial_duration: 500
+  };
+
+  return [fixation, stimulus, feedback];
 }
 
-// Timeline base
+// Timeline
 let timeline = [];
 
 // Instruções
@@ -96,21 +134,15 @@ timeline.push({
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `
     <h2>Experimento de Busca Visual</h2>
-    <p>Pressione <b>J</b> se encontrar a letra T</p>
-    <p>Pressione <b>F</b> se NÃO encontrar</p>
+    <p>Encontre a letra <b>T</b></p>
     <p>Responda o mais rápido possível</p>
     <p><b>Pressione qualquer tecla para começar</b></p>
   `
 });
 
 // Treino
-timeline.push({
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: "<p>Treino: pressione J se tiver T, F se não tiver</p>"
-});
-
-timeline.push(createTrial(10, true, "easy"));
-timeline.push(createTrial(10, false, "easy"));
+timeline.push(...createTrial(10, true, "easy"));
+timeline.push(...createTrial(10, false, "easy"));
 
 // Trials principais
 const setSizes = [10, 30, 60];
@@ -122,13 +154,13 @@ let trials = [];
 setSizes.forEach(size => {
   difficulties.forEach(diff => {
     for (let i = 0; i < repeticoes; i++) {
-      trials.push(createTrial(size, true, diff));
-      trials.push(createTrial(size, false, diff));
+      trials.push(...createTrial(size, true, diff));
+      trials.push(...createTrial(size, false, diff));
     }
   });
 });
 
-// Randomização
+// Randomizar
 trials = trials.sort(() => Math.random() - 0.5);
 
 timeline = timeline.concat(trials);
