@@ -131,13 +131,42 @@ let timeline = [];
 
 // Instruções
 timeline.push({
-  type: jsPsychHtmlKeyboardResponse,
+  type: jsPsychHtmlButtonResponse,
   stimulus: `
     <h2>Experimento de Busca Visual</h2>
-    <p>Encontre a letra <b>T</b></p>
+    <p>Encontre a letra <b>T</b</p>
+    <p>Pressione <b>J</b> se encontrar</p>
+    <p>Pressione <b>F</b> se não encontrar</p>
     <p>Responda o mais rápido possível</p>
-    <p><b>Pressione qualquer tecla para começar</b></p>
-  `
+  `,
+  choices: ["Iniciar Experimento"]
+});
+timeline.push({
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: "<h2>Prepare-se...</h2>",
+  choices: "NO_KEYS",
+  trial_duration: 1000
+});
+
+timeline.push({
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: "<h1>3</h1>",
+  choices: "NO_KEYS",
+  trial_duration: 500
+});
+
+timeline.push({
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: "<h1>2</h1>",
+  choices: "NO_KEYS",
+  trial_duration: 500
+});
+
+timeline.push({
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: "<h1>1</h1>",
+  choices: "NO_KEYS",
+  trial_duration: 500
 });
 
 // Treino
