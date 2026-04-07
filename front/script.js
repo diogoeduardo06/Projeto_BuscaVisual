@@ -8,8 +8,9 @@ const perfil = {
   sexo: urlParams.get("sexo"),
 };
 
-const jsPsych = initJsPsych({
+jsPsych.init({
   display_element: "jspsych-target",
+  timeline: timeline,
   on_finish: salvar
 });
 
