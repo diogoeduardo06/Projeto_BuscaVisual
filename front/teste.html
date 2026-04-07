@@ -1,35 +1,34 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
-    <meta charset="UTF-8">
-    <title>Teste</title>
+<meta charset="UTF-8">
+<title>Teste</title>
 
-    <!-- jsPsych CORE -->
-    <script src="https://unpkg.com/jspsych@7.3.0/dist/jspsych.js"></script>
+<!-- jsPsych CORE -->
+<script src="https://unpkg.com/jspsych@7.3.0/dist/jspsych.js"></script>
 
-    <!-- Plugins COMPATÍVEIS -->
-    <script src="https://unpkg.com/jspsych@7.3.0/dist/plugin-html-keyboard-response.js"></script>
-    <script src="https://unpkg.com/jspsych@7.3.0/dist/plugin-html-button-response.js"></script>
+<!-- Plugins -->
+<script src="https://unpkg.com/jspsych@7.3.0/dist/plugin-html-keyboard-response.js"></script>
+<script src="https://unpkg.com/jspsych@7.3.0/dist/plugin-html-button-response.js"></script>
 
-    <!-- Seu script -->
-    <script src="script.js" defer></script>
+<style>
+body {
+  margin:0;
+  background:#0f172a;
+  color:white;
+}
 
-    <style>
-        body {
-            margin: 0;
-            background: #0f172a;
-            color: white;
-        }
-
-        #jspsych-target {
-            height: 100vh;
-        }
-    </style>
+#jspsych-target {
+  height:100vh;
+}
+</style>
 </head>
 
 <body>
-    <div id="jspsych-target"></div>
-</body>
 
+<div id="jspsych-target"></div>
+
+<script src="script.js"></script>
+
+</body>
 </html>
