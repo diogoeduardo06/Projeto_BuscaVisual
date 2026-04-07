@@ -1,13 +1,6 @@
-// ==========================
-// CONFIGURAÇÃO DO BACKEND
-// ==========================
-const BACKEND_URL = "http://localhost:3000"; 
-// Para coleta definitiva, apenas troque a URL pelo endpoint real, ex:
-// const BACKEND_URL = "https://buscavisual.onrender.com";
+const BACKEND_URL = "https://buscavisual.onrender.com";
 
-// ==========================
-// DADOS DO FORMULÁRIO
-// ==========================
+// dados do form
 const urlParams = new URLSearchParams(window.location.search);
 
 const perfil = {
@@ -20,9 +13,7 @@ const perfil = {
   oculos: urlParams.get("oculos"),
 };
 
-// ==========================
 // GERAR GRID
-// ==========================
 function generateStimuli(size, target, difficulty, distraction){
   const cols = Math.ceil(Math.sqrt(size));
   let elements = [];
@@ -86,9 +77,7 @@ function generateStimuli(size, target, difficulty, distraction){
   </div>`;
 }
 
-// ==========================
 // CRIAR TRIAL
-// ==========================
 function createTrial(size, target, difficulty, distraction, blockIndex, trialIndex){
   return [
     {
@@ -96,9 +85,15 @@ function createTrial(size, target, difficulty, distraction, blockIndex, trialInd
       stimulus:generateStimuli(size,target,difficulty,distraction),
       choices:["f","j"],
       response_ends_trial: true,
-      data:{size,target,difficulty,distraction,block:blockIndex,trial:trialIndex},
+      data:{
+        size, target, difficulty, distraction, block:blockIndex, trial:trialIndex
+      },
       on_finish:function(data){
-        data.correct = (data.response === "j" && target) || (data.response === "f" && !target);
+        if(data.response === null){
+          data.correct = null; // sem resposta
+        } else {
+          data.correct = (data.response === "j" && data.target) || (data.response === "f" && !data.target);
+        }
         data.timestamp = Date.now();
       }
     },
@@ -106,7 +101,7 @@ function createTrial(size, target, difficulty, distraction, blockIndex, trialInd
       type:"html-keyboard-response",
       stimulus:function(){
         const d = jsPsych.data.get().last(1).values()[0];
-        if(d.correct === null || d.correct === undefined){
+        if(d.correct === null){
           return "<p style='color:orange'>Sem resposta</p>";
         }
         return d.correct ? "<p style='color:green'>Correto</p>" : "<p style='color:red'>Errado</p>";
@@ -117,20 +112,19 @@ function createTrial(size, target, difficulty, distraction, blockIndex, trialInd
   ];
 }
 
-// ==========================
-// CRIAR BLOCO COM DIFICULDADE GRADATIVA
-// ==========================
+// CRIAR BLOCO COM DIFICULDADE GRADATIVA E RANDOMIZAÇÃO CONTROLADA
 function createBlock(distraction,label,blockIndex){
   let block = [{
     type:"html-keyboard-response",
     stimulus:`<h2>${label}</h2><p>Pressione qualquer tecla</p>`
   }];
 
-  let sizes = [10,20,30];
-  let difficulties = ["easy","hard"];
+  let sizes = [10,20,30]; // pequeno -> grande
+  let difficulties = ["easy","hard"]; // fácil -> difícil
 
   let trials = [];
 
+  // gerar trials por dificuldade e tamanho
   sizes.forEach(size=>{
     difficulties.forEach(diff=>{
       [true,false].forEach(target=>{
@@ -139,7 +133,7 @@ function createBlock(distraction,label,blockIndex){
     });
   });
 
-  // embaralhar dentro de cada grupo
+  // embaralhar dentro de cada nível de dificuldade
   let shuffled = [];
   trials.forEach(trialGroup=>{
     shuffled.push(...trialGroup.sort(()=>Math.random()-0.5));
@@ -148,9 +142,7 @@ function createBlock(distraction,label,blockIndex){
   return block.concat(shuffled);
 }
 
-// ==========================
 // TIMELINE
-// ==========================
 let timeline = [];
 
 timeline.push({
@@ -169,7 +161,7 @@ timeline.push({
   });
 });
 
-// ordem aleatória dos blocos
+// ordem aleatória dos blocos (com e sem estímulos)
 let blocos = Math.random()>0.5
   ? [createBlock(false,"Sem estímulo",0), createBlock(true,"Com estímulo",1)]
   : [createBlock(true,"Com estímulo",0), createBlock(false,"Sem estímulo",1)];
@@ -181,32 +173,43 @@ blocos.forEach((b,i)=>{
   }
 });
 
-// ==========================
-// FUNÇÃO DE SALVAR DADOS
-// ==========================
+// SALVAR
 async function salvar(){
-  let dados = jsPsych.data.get().values().map(d => ({...d, ...perfil}));
+  // salva apenas os campos relevantes
+  let dados = jsPsych.data.get().values().map(d => ({
+    id: perfil.id,
+    idade: perfil.idade,
+    sexo: perfil.sexo,
+    sono: perfil.sono,
+    cafeina: perfil.cafeina,
+    jogos: perfil.jogos,
+    oculos: perfil.oculos,
+    block: d.block,
+    trial: d.trial,
+    size: d.size,
+    difficulty: d.difficulty,
+    distraction: d.distraction,
+    target: d.target,
+    response: d.response,
+    correct: d.correct === undefined ? null : d.correct,
+    rt: d.rt,
+    timestamp: d.timestamp
+  }));
+
   try {
-    const res = await fetch(BACKEND_URL + "/save", {
+    await fetch(BACKEND_URL + "/save", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify(dados)
     });
-    const json = await res.json();
-
-    console.log("Dados enviados:", json);
-    // Mensagem temporária mostrando que os dados foram salvos
-    document.body.innerHTML = `<h2>Obrigado!</h2><p>Total de registros temporários: ${json.total}</p>
-    <p>Para visualizar, acesse <a href="${BACKEND_URL}/data" target="_blank">/data</a></p>`;
+    document.body.innerHTML = "<h2>Obrigado!</h2>";
   } catch(e){
     console.error("Erro ao salvar dados:", e);
     document.body.innerHTML = "<h2>Erro ao enviar dados. Tente novamente.</h2>";
   }
 }
 
-// ==========================
-// INICIAR EXPERIMENTO
-// ==========================
+// INICIAR
 jsPsych.init({
   display_element:"jspsych-target",
   timeline: timeline,
