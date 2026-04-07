@@ -13,46 +13,58 @@ const perfil = {
   oculos: urlParams.get("oculos"),
 };
 
-// GERAR GRID
+// GERAR GRID COM DIFICULDADE REAL
 function generateStimuli(size, target, difficulty, distraction){
-  let elements = [];
   const cols = Math.ceil(Math.sqrt(size));
+  let elements = [];
+
+  // Distratores por dificuldade
+  const easyDistractors = ["L","I","F","E"];
+  const hardDistractors = ["I","L","F"];
 
   for(let i=0;i<size;i++){
-    elements.push(`<div>${difficulty==="hard"?"I":"L"}</div>`);
+    if(difficulty === "easy"){
+      elements.push(easyDistractors[Math.floor(Math.random()*easyDistractors.length)]);
+    } else {
+      elements.push(hardDistractors[Math.floor(Math.random()*hardDistractors.length)]);
+    }
   }
 
+  // Inserir alvo
   if(target){
     const index = Math.floor(Math.random()*size);
-    elements[index] = `<div style="color:red;font-weight:bold;">T</div>`;
+    elements[index] = "T"; // sem destaque
   }
 
-  let distractors = "";
+  // Distratores visuais animados
+  let visualDistractors = "";
   if(distraction){
-    for(let i=0;i<5;i++){
-      distractors += `
+    for(let i=0;i<10;i++){ // 10 distractores
+      visualDistractors += `
       <div style="
         position:absolute;
-        width:50px;
-        height:50px;
+        width:30px;
+        height:30px;
         border-radius:50%;
-        background:rgba(255,0,0,0.2);
-        top:${Math.random()*100}%;
-        left:${Math.random()*100}%;
-        animation:pulse 1s infinite;
+        background:rgba(255,255,0,0.4); /* amarelo suave */
+        top:${Math.random()*90}%;
+        left:${Math.random()*90}%;
+        animation:flash 0.6s infinite alternate;
       "></div>`;
     }
   }
 
   return `
   <style>
-  @keyframes pulse {
-    50% { transform:scale(1.5); opacity:0.2; }
+  @keyframes flash {
+    0% { opacity:0.2; transform:scale(1); }
+    50% { opacity:0.8; transform:scale(1.3); }
+    100% { opacity:0.2; transform:scale(1); }
   }
   </style>
 
   <div style="position:relative;height:100vh;display:flex;justify-content:center;align-items:center;">
-    ${distractors}
+    ${visualDistractors}
     <div style="
       display:grid;
       grid-template-columns:repeat(${cols},1fr);
@@ -60,8 +72,9 @@ function generateStimuli(size, target, difficulty, distraction){
       width:90vw;
       max-width:500px;
       font-size:20px;
+      text-align:center;
     ">
-      ${elements.join("")}
+      ${elements.map(e => `<div>${e}</div>`).join("")}
     </div>
   </div>`;
 }
@@ -69,15 +82,6 @@ function generateStimuli(size, target, difficulty, distraction){
 // CRIAR TRIAL
 function createTrial(size, target, difficulty, distraction, blockIndex, trialIndex){
   return [
-
-    // Fixação
-    {
-      type:"html-keyboard-response",
-      stimulus:"<h2>+</h2>",
-      choices: jsPsych.NO_KEYS,
-      trial_duration:800
-    },
-
     // Estímulo (sem limite de tempo)
     {
       type:"html-keyboard-response",
@@ -87,7 +91,6 @@ function createTrial(size, target, difficulty, distraction, blockIndex, trialInd
       data:{size,target,difficulty,distraction,block:blockIndex,trial:trialIndex},
 
       on_finish:function(data){
-        // tempo de reação já é fornecido pelo jsPsych
         data.correct = (data.response === "j" && target) || (data.response === "f" && !target);
         data.timestamp = Date.now();
       }
@@ -106,7 +109,6 @@ function createTrial(size, target, difficulty, distraction, blockIndex, trialInd
       choices: jsPsych.NO_KEYS,
       trial_duration:600
     }
-
   ];
 }
 
