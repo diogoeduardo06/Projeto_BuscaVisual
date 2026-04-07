@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import csv
 import os
 
 app = Flask(__name__)
+CORS(app)
 
-# Garante que o arquivo existe
 if not os.path.exists('dados.csv'):
     with open('dados.csv', 'w', newline='') as f:
         writer = csv.writer(f)
@@ -37,6 +38,3 @@ def save_data():
 @app.route('/')
 def home():
     return "API funcionando!"
-
-if __name__ == '__main__':
-    app.run(debug=True)
