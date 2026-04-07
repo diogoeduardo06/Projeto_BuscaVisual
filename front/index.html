@@ -4,81 +4,56 @@
   <meta charset="UTF-8">
   <title>Experimento</title>
 
-  <script src="https://unpkg.com/jspsych@7.3.0"></script>
-  <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
-  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
-
-  <script src="script.js" defer></script>
-
   <style>
     body {
       margin:0;
       font-family:Arial;
       background:#0f172a;
       color:white;
-      text-align:center;
-    }
-
-    #container {
-      display:flex;
-      flex-direction:column;
-      height:100vh;
-    }
-
-    header, footer {
-      background:#1e293b;
-      padding:10px;
-    }
-
-    #progress-bar {
-      height:8px;
-      background:#334155;
-      border-radius:5px;
-      overflow:hidden;
-      margin-top:5px;
-    }
-
-    #progress {
-      height:100%;
-      width:0%;
-      background:#22c55e;
-    }
-
-    #jspsych-target {
-      flex:1;
       display:flex;
       justify-content:center;
       align-items:center;
+      height:100vh;
+      text-align:center;
     }
 
-    .start-btn {
+    .box {
+      background:#1e293b;
+      padding:40px;
+      border-radius:12px;
+    }
+
+    button {
+      margin-top:20px;
       padding:15px 30px;
       font-size:18px;
+      border:none;
       border-radius:10px;
       background:#22c55e;
       color:white;
-      border:none;
       cursor:pointer;
+    }
+
+    button:hover {
+      transform:scale(1.05);
     }
   </style>
 </head>
 
 <body>
-  <div id="container">
 
-    <header>
-      Experimento de Atenção Visual
-      <div id="progress-bar">
-        <div id="progress"></div>
-      </div>
-    </header>
+<div class="box">
+  <h1>Experimento de Busca Visual</h1>
+  <p>Você será direcionado para um formulário antes do teste.</p>
 
-    <div id="jspsych-target"></div>
+  <button onclick="start()">Iniciar</button>
+</div>
 
-    <footer>
-      J = TEM | F = NÃO TEM
-    </footer>
+<script>
+function start(){
+  window.location.href = "form.html";
+}
+</script>
 
-  </div>
 </body>
 </html>

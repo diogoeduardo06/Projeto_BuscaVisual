@@ -1,6 +1,5 @@
 const urlParams = new URLSearchParams(window.location.search);
 
-// perfil do participante
 const perfil = {
   id: urlParams.get("id"),
   idade: urlParams.get("idade"),
@@ -25,7 +24,7 @@ function updateProgress() {
   document.getElementById("progress").style.width = percent + "%";
 }
 
-// estímulos
+// 🔥 ESTÍMULOS MELHORADOS
 function generateStimuli(size, target, difficulty, distraction) {
 
   let elements = [];
@@ -37,33 +36,52 @@ function generateStimuli(size, target, difficulty, distraction) {
 
   if (target) {
     const i = Math.floor(Math.random() * size);
-    elements[i] = `<div style="color:#22c55e">T</div>`;
+    elements[i] = `<div>T</div>`; // SEM COR ESPECIAL
+  }
+
+  // 🔥 estímulos periféricos
+  let distractions = "";
+
+  if (distraction) {
+    for (let i = 0; i < 6; i++) {
+      distractions += `
+        <div style="
+          position:absolute;
+          width:60px;
+          height:60px;
+          border-radius:50%;
+          background:rgba(255,0,0,0.2);
+          top:${Math.random()*100}%;
+          left:${Math.random()*100}%;
+          animation: pulse 1s infinite;
+        "></div>
+      `;
+    }
   }
 
   return `
-  <div style="
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-    ${distraction ? "animation:pulse 1s infinite;" : ""}
-  ">
+  <style>
+    @keyframes pulse {
+      50% { transform: scale(1.5); opacity:0.2; }
+    }
+  </style>
+
+  <div style="position:relative; height:100vh; display:flex; justify-content:center; align-items:center;">
+
+    ${distractions}
+
     <div style="
       display:grid;
       grid-template-columns: repeat(${cols},1fr);
       gap:6px;
       width:90vw;
       max-width:500px;
+      z-index:2;
     ">
       ${elements.join("")}
     </div>
-  </div>
 
-  <style>
-    @keyframes pulse {
-      50% { box-shadow:0 0 30px red; }
-    }
-  </style>
+  </div>
   `;
 }
 
@@ -110,7 +128,7 @@ function createTrial(size, target, difficulty, distraction) {
   ];
 }
 
-// blocos
+// 🔥 BLOCO COM RANDOMIZAÇÃO REAL
 function createBlock(distraction, label){
 
   let block = [];
@@ -120,36 +138,41 @@ function createBlock(distraction, label){
     stimulus:`<h2>${label}</h2><p>Pressione qualquer tecla</p>`
   });
 
+  let trials = [];
+
   [10,30,60].forEach(size=>{
     ["easy","hard"].forEach(diff=>{
       for(let i=0;i<5;i++){
-        block.push(...createTrial(size,true,diff,distraction));
-        block.push(...createTrial(size,false,diff,distraction));
+        trials.push(...createTrial(size,true,diff,distraction));
+        trials.push(...createTrial(size,false,diff,distraction));
       }
     });
   });
 
-  return block;
+  // 🔥 RANDOMIZA
+  trials = trials.sort(() => Math.random() - 0.5);
+
+  return block.concat(trials);
 }
 
 // timeline
 let timeline = [];
 
-// botão inicial
+// botão iniciar
 timeline.push({
   type: jsPsychHtmlButtonResponse,
-  stimulus: "<h2>Experimento de Busca Visual</h2>",
-  choices:["Iniciar"],
+  stimulus: "<h2>Preparado?</h2>",
+  choices:["Começar"],
   button_html:'<button class="start-btn">%choice%</button>'
 });
 
 // countdown
-["Prepare-se...","3","2","1"].forEach(t=>{
+["3","2","1"].forEach(t=>{
   timeline.push({
     type: jsPsychHtmlKeyboardResponse,
     stimulus:`<h1>${t}</h1>`,
     choices:"NO_KEYS",
-    trial_duration:800
+    trial_duration:700
   });
 });
 
@@ -164,7 +187,7 @@ blocos.forEach((b,i)=>{
   if(i===0){
     timeline.push({
       type: jsPsychHtmlKeyboardResponse,
-      stimulus:"<h2>Pausa</h2><p>Pressione qualquer tecla</p>"
+      stimulus:"<h2>Pausa</h2>"
     });
   }
 });
@@ -175,7 +198,6 @@ total_trials = timeline.length;
 function salvar(){
 
   let dados = jsPsych.data.get().values();
-
   dados = dados.map(d => ({ ...d, ...perfil }));
 
   fetch("https://buscavisual.onrender.com/save",{
@@ -184,8 +206,7 @@ function salvar(){
     body: JSON.stringify(dados)
   });
 
-  document.body.innerHTML = "<h2>Obrigado pela participação!</h2>";
+  document.body.innerHTML = "<h2>Obrigado!</h2>";
 }
 
-// rodar
 jsPsych.run(timeline);
