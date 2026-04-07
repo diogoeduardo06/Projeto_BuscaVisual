@@ -6,6 +6,7 @@ if (!participant_id) {
 }
 
 const inicio = Date.now();
+let total_trials = 0;
 
 // jsPsych init
 const jsPsych = initJsPsych({
@@ -34,16 +35,14 @@ const jsPsych = initJsPsych({
   }
 });
 
-// Progress bar
+// Progress bar REAL
 function updateProgress() {
-  const total = jsPsych.timelineVariable("total_trials", true) || 1;
   const current = jsPsych.data.get().count();
-  const percent = Math.min((current / total) * 100, 100);
-
+  const percent = Math.min((current / total_trials) * 100, 100);
   document.getElementById("progress").style.width = percent + "%";
 }
 
-// Grid de estímulos
+// Estímulos
 function generateStimuli(size, targetPresent, difficulty) {
   let elements = [];
 
@@ -84,7 +83,7 @@ function generateStimuli(size, targetPresent, difficulty) {
   </div>`;
 }
 
-// Trial com fixação + estímulo + feedback
+// Trial
 function createTrial(setSize, target, difficulty) {
 
   const fixation = {
@@ -129,44 +128,52 @@ function createTrial(setSize, target, difficulty) {
 // Timeline
 let timeline = [];
 
-// Instruções
+// 🔥 Tela inicial com botão bonito
 timeline.push({
   type: jsPsychHtmlButtonResponse,
   stimulus: `
-    <h2>Experimento de Busca Visual</h2>
-    <p>Encontre a letra <b>T</b</p>
-    <p>Pressione <b>J</b> se encontrar</p>
-    <p>Pressione <b>F</b> se não encontrar</p>
+    <h1>Experimento de Busca Visual</h1>
+    <p>Encontre a letra <b>T</b></p>
+    <p><b>J</b> = TEM alvo</p>
+    <p><b>F</b> = NÃO TEM</p>
     <p>Responda o mais rápido possível</p>
   `,
-  choices: ["Iniciar Experimento"]
-});
-timeline.push({
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: "<h2>Prepare-se...</h2>",
-  choices: "NO_KEYS",
-  trial_duration: 1000
-});
-
-timeline.push({
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: "<h1>3</h1>",
-  choices: "NO_KEYS",
-  trial_duration: 500
-});
-
-timeline.push({
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: "<h1>2</h1>",
-  choices: "NO_KEYS",
-  trial_duration: 500
+  choices: ["Iniciar Experimento"],
+  button_html: `
+    <button style="
+      padding:15px 30px;
+      font-size:18px;
+      border:none;
+      border-radius:10px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color:white;
+      cursor:pointer;
+      margin-top:20px;
+      transition: 0.3s;
+    "
+    onmouseover="this.style.transform='scale(1.05)'"
+    onmouseout="this.style.transform='scale(1)'"
+    >
+      %choice%
+    </button>
+  `
 });
 
-timeline.push({
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: "<h1>1</h1>",
-  choices: "NO_KEYS",
-  trial_duration: 500
+// ⏳ Contagem regressiva
+const countdown = [
+  { stimulus: "<h2>Prepare-se...</h2>", duration: 1000 },
+  { stimulus: "<h1>3</h1>", duration: 700 },
+  { stimulus: "<h1>2</h1>", duration: 700 },
+  { stimulus: "<h1>1</h1>", duration: 700 }
+];
+
+countdown.forEach(c => {
+  timeline.push({
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: c.stimulus,
+    choices: "NO_KEYS",
+    trial_duration: c.duration
+  });
 });
 
 // Treino
@@ -192,6 +199,10 @@ setSizes.forEach(size => {
 // Randomizar
 trials = trials.sort(() => Math.random() - 0.5);
 
+// Contar trials reais
+total_trials = trials.length;
+
+// Adicionar ao timeline
 timeline = timeline.concat(trials);
 
 // Rodar
