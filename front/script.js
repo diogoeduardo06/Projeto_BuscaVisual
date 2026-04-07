@@ -134,17 +134,45 @@ function createBlock(withDistraction, label) {
 // timeline
 let timeline = [];
 
-// formulário
 timeline.push({
-  type: jsPsychSurveyHtmlForm,
+  type: "survey-html-form",
   html: `
     <h2>Informações</h2>
-    Idade: <input name="idade"><br><br>
-    Sexo: <input name="sexo"><br><br>
-    Sono: <input name="sono"><br><br>
-    Cafeína: <input name="cafeina"><br><br>
-    Jogos: <input name="jogos"><br><br>
-    Óculos: <input name="oculos"><br><br>
+
+    <p>Idade: <input name="idade" required></p>
+
+    <p>Sexo:
+      <select name="sexo">
+        <option value="M">Masculino</option>
+        <option value="F">Feminino</option>
+        <option value="Outro">Outro</option>
+      </select>
+    </p>
+
+    <p>Horas de sono:
+      <input name="sono" type="number">
+    </p>
+
+    <p>Consumiu cafeína?
+      <select name="cafeina">
+        <option>Sim</option>
+        <option>Não</option>
+      </select>
+    </p>
+
+    <p>Joga videogame?
+      <select name="jogos">
+        <option>Sim</option>
+        <option>Não</option>
+      </select>
+    </p>
+
+    <p>Usa óculos?
+      <select name="oculos">
+        <option>Sim</option>
+        <option>Não</option>
+      </select>
+    </p>
   `,
   button_label: "Continuar"
 });
