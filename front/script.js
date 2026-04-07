@@ -71,7 +71,7 @@ jsPsych.init({
   on_finish: function() {
     const dados = jsPsych.data.get().values();
 
-    fetch("https://SEU-BACKEND.onrender.com/save", {
+    fetch("https://buscavisual.onrender.com/save", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
