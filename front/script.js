@@ -5,9 +5,38 @@ if (!participant_id) {
   participant_id = "P" + Math.floor(Math.random() * 1000000);
 }
 
-
 // Tempo total
 const inicio = Date.now();
+
+// Criar instância do jsPsych PRIMEIRO
+const jsPsych = initJsPsych({
+  on_finish: function() {
+
+    const fim = Date.now();
+    const duracao = fim - inicio;
+
+    let dados = jsPsych.data.get().values();
+
+    dados = dados.map(d => ({
+      ...d,
+      total_time: duracao
+    }));
+
+    fetch("https://buscavisual.onrender.com/save", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(dados)
+    })
+    .then(() => {
+      document.body.innerHTML = "<h2>Obrigado pela participação!</h2>";
+    })
+    .catch(() => {
+      document.body.innerHTML = "<h2>Erro ao salvar os dados</h2>";
+    });
+  }
+});
 
 // Gerar estímulos
 function generateStimuli(size, targetPresent, difficulty) {
@@ -59,9 +88,10 @@ function createTrial(setSize, target, difficulty) {
   };
 }
 
+// Timeline base
 let timeline = [];
 
-// Tela de instruções
+// Instruções
 timeline.push({
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `
@@ -87,16 +117,6 @@ const setSizes = [10, 30, 60];
 const difficulties = ["easy", "hard"];
 const repeticoes = 5;
 
-setSizes.forEach(size => {
-  difficulties.forEach(diff => {
-    for (let i = 0; i < repeticoes; i++) {
-      timeline.push(createTrial(size, true, diff));
-      timeline.push(createTrial(size, false, diff));
-    }
-  });
-});
-
-// Randomização
 let trials = [];
 
 setSizes.forEach(size => {
@@ -108,39 +128,10 @@ setSizes.forEach(size => {
   });
 });
 
-trials = jsPsych.randomization.shuffle(trials);
+// Randomização
+trials = trials.sort(() => Math.random() - 0.5);
 
-// mantém instruções e treino no início
 timeline = timeline.concat(trials);
 
-// Finalização
-const jsPsych = initJsPsych({
-  on_finish: function() {
-
-    const fim = Date.now();
-    const duracao = fim - inicio;
-
-    let dados = jsPsych.data.get().values();
-
-    dados = dados.map(d => ({
-      ...d,
-      total_time: duracao
-    }));
-
-    fetch("https://buscavisual.onrender.com/save", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(dados)
-    })
-    .then(() => {
-      document.body.innerHTML = "<h2>Obrigado pela participação!</h2>";
-    })
-    .catch(() => {
-      document.body.innerHTML = "<h2>Erro ao salvar os dados</h2>";
-    });
-  }
-});
-
+// Rodar
 jsPsych.run(timeline);
