@@ -148,28 +148,7 @@ timeline.push({
   `,
   choices: ["Iniciar Experimento"],
 
-  // 🔥 CORREÇÃO AQUI
-  button_html: (choice) => {
-    return `
-      <button style="
-        padding:15px 30px;
-        font-size:18px;
-        border:none;
-        border-radius:12px;
-        background: linear-gradient(135deg, #22c55e, #16a34a);
-        color:white;
-        cursor:pointer;
-        margin-top:20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        transition: 0.2s;
-      "
-      onmouseover="this.style.transform='scale(1.05)'"
-      onmouseout="this.style.transform='scale(1)'"
-      >
-        ${choice}
-      </button>
-    `;
-  }
+  button_html: '<button class="start-btn">%choice%</button>'
 });
 
 // Contagem
