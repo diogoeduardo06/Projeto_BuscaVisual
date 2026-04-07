@@ -1,6 +1,6 @@
 const BACKEND_URL = "https://buscavisual.onrender.com";
 
-// pegar dados do form
+// dados do form
 const urlParams = new URLSearchParams(window.location.search);
 
 const perfil = {
@@ -9,37 +9,182 @@ const perfil = {
   sexo: urlParams.get("sexo"),
 };
 
-// 🔥 TIMELINE (AGORA EXISTE)
+// GERAR GRID
+function generateStimuli(size, target, difficulty, distraction){
+
+  let elements = [];
+  const cols = Math.ceil(Math.sqrt(size));
+
+  for(let i=0;i<size;i++){
+    elements.push(`<div>${difficulty==="hard"?"I":"L"}</div>`);
+  }
+
+  if(target){
+    const index = Math.floor(Math.random()*size);
+    elements[index] = `<div>T</div>`;
+  }
+
+  let distractors = "";
+
+  if(distraction){
+    for(let i=0;i<5;i++){
+      distractors += `
+      <div style="
+        position:absolute;
+        width:50px;
+        height:50px;
+        border-radius:50%;
+        background:rgba(255,0,0,0.2);
+        top:${Math.random()*100}%;
+        left:${Math.random()*100}%;
+        animation:pulse 1s infinite;
+      "></div>`;
+    }
+  }
+
+  return `
+  <style>
+  @keyframes pulse {
+    50% { transform:scale(1.5); opacity:0.2; }
+  }
+  </style>
+
+  <div style="position:relative;height:100vh;display:flex;justify-content:center;align-items:center;">
+    ${distractors}
+
+    <div style="
+      display:grid;
+      grid-template-columns:repeat(${cols},1fr);
+      gap:5px;
+      width:90vw;
+      max-width:500px;
+      font-size:20px;
+    ">
+      ${elements.join("")}
+    </div>
+  </div>`;
+}
+
+// TRIAL
+function createTrial(size,target,difficulty,distraction){
+
+  return [
+    {
+      type:"html-keyboard-response",
+      stimulus:"<h2>+</h2>",
+      choices: jsPsych.NO_KEYS,
+      trial_duration:800
+    },
+
+    {
+      type:"html-keyboard-response",
+      stimulus:generateStimuli(size,target,difficulty,distraction),
+      choices:["f","j"],
+      trial_duration:3000,
+      data:{size,target,difficulty,distraction},
+
+      on_finish:function(data){
+
+        if(data.response === null){
+          data.no_response = true;
+          return;
+        }
+
+        data.correct =
+          (data.response === "j" && target) ||
+          (data.response === "f" && !target);
+      }
+    },
+
+    {
+      type:"html-keyboard-response",
+      stimulus:function(){
+        const d = jsPsych.data.get().last(1).values()[0];
+
+        if(d.no_response) return "<p style='color:yellow'>Sem resposta</p>";
+        if(d.correct) return "<p style='color:green'>Correto</p>";
+        return "<p style='color:red'>Errado</p>";
+      },
+      choices: jsPsych.NO_KEYS,
+      trial_duration:600
+    }
+  ];
+}
+
+// BLOCO
+function createBlock(distraction,label){
+
+  let block = [];
+
+  block.push({
+    type:"html-keyboard-response",
+    stimulus:`<h2>${label}</h2><p>Pressione qualquer tecla</p>`
+  });
+
+  let trials = [];
+
+  [10,30,60].forEach(size=>{
+    ["easy","hard"].forEach(diff=>{
+      for(let i=0;i<5;i++){
+        trials.push(...createTrial(size,true,diff,distraction));
+        trials.push(...createTrial(size,false,diff,distraction));
+      }
+    });
+  });
+
+  // randomização REAL
+  trials = trials.sort(()=>Math.random()-0.5);
+
+  return block.concat(trials);
+}
+
+// TIMELINE
 let timeline = [];
 
-// tela inicial
+// botão início
 timeline.push({
-  type: "html-button-response",
-  stimulus: "<h2>Pronto para começar?</h2>",
-  choices: ["Começar"]
+  type:"html-button-response",
+  stimulus:"<h2>Preparado?</h2>",
+  choices:["Começar"]
 });
 
-// exemplo de trial simples (teste básico)
-timeline.push({
-  type: "html-keyboard-response",
-  stimulus: "<h1>+</h1>",
-  choices: jsPsych.NO_KEYS,
-  trial_duration: 1000
+// countdown
+["3","2","1"].forEach(t=>{
+  timeline.push({
+    type:"html-keyboard-response",
+    stimulus:`<h1>${t}</h1>`,
+    choices: jsPsych.NO_KEYS,
+    trial_duration:700
+  });
 });
 
-timeline.push({
-  type: "html-keyboard-response",
-  stimulus: "<h2>Pressione qualquer tecla</h2>"
+// ordem aleatória dos blocos
+let blocos = Math.random()>0.5
+  ? [createBlock(false,"Sem estímulo"), createBlock(true,"Com estímulo")]
+  : [createBlock(true,"Com estímulo"), createBlock(false,"Sem estímulo")];
+
+blocos.forEach((b,i)=>{
+  timeline = timeline.concat(b);
+
+  if(i===0){
+    timeline.push({
+      type:"html-keyboard-response",
+      stimulus:"<h2>Pausa</h2>"
+    });
+  }
 });
 
-// salvar dados
+// SALVAR
 function salvar(){
-  const dados = jsPsych.data.get().values().map(d => ({
+
+  let dados = jsPsych.data.get().values();
+
+  dados = dados.map(d => ({
     ...d,
     ...perfil
   }));
 
-  fetch(BACKEND_URL + "/save", {
+  fetch(BACKEND_URL + "/save",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify(dados)
@@ -48,9 +193,9 @@ function salvar(){
   document.body.innerHTML = "<h2>Obrigado!</h2>";
 }
 
-// iniciar experimento (jsPsych v6)
+// INICIAR
 jsPsych.init({
-  display_element: "jspsych-target",
+  display_element:"jspsych-target",
   timeline: timeline,
   on_finish: salvar
 });
