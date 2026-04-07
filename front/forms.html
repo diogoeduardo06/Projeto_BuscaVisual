@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Formulário</title>
+
+  <style>
+    body {
+      background: #0f172a;
+      color: white;
+      font-family: Arial;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    form {
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 10px;
+      width: 300px;
+    }
+
+    input,
+    select,
+    button {
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      background: #22c55e;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+  <form id="form">
+    <h2>Dados</h2>
+
+    <input name="idade" placeholder="Idade" required>
+
+    <select name="sexo">
+      <option value="M">Masculino</option>
+      <option value="F">Feminino</option>
+      <option value="Outro">Outro</option>
+    </select>
+
+    <input name="sono" placeholder="Horas de sono">
+
+    <select name="cafeina">
+      <option value="Sim">Cafeína</option>
+      <option value="Não">Sem cafeína</option>
+    </select>
+
+    <select name="jogos">
+      <option value="Sim">Joga</option>
+      <option value="Não">Não joga</option>
+    </select>
+
+    <select name="oculos">
+      <option value="Sim">Óculos</option>
+      <option value="Não">Sem óculos</option>
+    </select>
+
+    <button type="submit">Começar</button>
+  </form>
+
+  <script>
+    document.getElementById("form").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const data = new FormData(this);
+      const params = new URLSearchParams(data);
+
+      params.append("id", "P" + Math.floor(Math.random() * 100000));
+
+      window.location.href = "/teste.html?" + params.toString();
+    });
+  </script>
+
+</body>
+
+</html>

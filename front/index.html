@@ -1,70 +1,73 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
   <meta charset="UTF-8">
   <title>Experimento</title>
 
   <style>
     body {
-      margin:0;
-      font-family:Arial;
-      background:#0f172a;
-      color:white;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      height:100vh;
-      text-align:center;
+      margin: 0;
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
     }
 
     .box {
-      background:#1e293b;
-      padding:40px;
-      border-radius:12px;
+      background: #1e293b;
+      padding: 40px;
+      border-radius: 12px;
+      width: 300px;
     }
 
     button {
-      display:block;
-      width:100%;
-      margin:15px 0;
-      padding:15px;
-      font-size:18px;
-      border:none;
-      border-radius:10px;
-      background:#22c55e;
-      color:white;
-      cursor:pointer;
+      display: block;
+      width: 100%;
+      margin: 15px 0;
+      padding: 15px;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
     }
 
-    button.secondary {
-      background:#3b82f6;
+    .form-btn {
+      background: #22c55e;
+      color: white;
     }
 
-    button:hover {
-      transform:scale(1.05);
+    .test-btn {
+      background: #3b82f6;
+      color: white;
     }
   </style>
 </head>
 
 <body>
 
-<div class="box">
-  <h1>Busca Visual</h1>
+  <div class="box">
+    <h2>Busca Visual</h2>
 
-  <button onclick="goForm()">Preencher Formulário</button>
-  <button class="secondary" onclick="startDirect()">Ir direto para o teste</button>
-</div>
+    <button class="form-btn" onclick="goForm()">Preencher Formulário</button>
+    <button class="test-btn" onclick="startDirect()">Ir direto para o teste</button>
+  </div>
 
-<script>
-function goForm(){
-  window.location.href = "/forms.html";
-}
+  <script>
+    function goForm() {
+      window.location.href = "/forms.html";
+    }
 
-function startDirect(){
-  const id = "P" + Math.floor(Math.random()*100000);
-  window.location.href = "/teste.html?id=" + id;
-}
-</script>
+    function startDirect() {
+      const id = "P" + Math.floor(Math.random() * 100000);
+      window.location.href = "/teste.html?id=" + id;
+    }
+  </script>
 
 </body>
+
 </html>
