@@ -66,9 +66,11 @@ function generateStimuli(size, target, difficulty, distraction){
 }
 
 // TRIAL
-function createTrial(size,target,difficulty,distraction){
+function createTrial(size, target, difficulty, distraction){
 
   return [
+
+    // Fixação
     {
       type:"html-keyboard-response",
       stimulus:"<h2>+</h2>",
@@ -76,38 +78,55 @@ function createTrial(size,target,difficulty,distraction){
       trial_duration:800
     },
 
+    // Estímulo
     {
       type:"html-keyboard-response",
       stimulus:generateStimuli(size,target,difficulty,distraction),
       choices:["f","j"],
-      trial_duration:3000,
+
+      // 🔥 IMPORTANTE
+      response_ends_trial: true,
+      trial_duration: 4000,
+
       data:{size,target,difficulty,distraction},
 
       on_finish:function(data){
 
+        // 🔥 SEM RESPOSTA
         if(data.response === null){
           data.no_response = true;
+          data.correct = null; // NÃO É ERRO
           return;
         }
 
+        // RESPOSTA VÁLIDA
         data.correct =
           (data.response === "j" && target) ||
           (data.response === "f" && !target);
       }
     },
 
+    // Feedback
     {
       type:"html-keyboard-response",
       stimulus:function(){
+
         const d = jsPsych.data.get().last(1).values()[0];
 
-        if(d.no_response) return "<p style='color:yellow'>Sem resposta</p>";
-        if(d.correct) return "<p style='color:green'>Correto</p>";
+        if(d.no_response){
+          return "<p style='color:orange'>Sem resposta</p>";
+        }
+
+        if(d.correct){
+          return "<p style='color:green'>Correto</p>";
+        }
+
         return "<p style='color:red'>Errado</p>";
       },
       choices: jsPsych.NO_KEYS,
       trial_duration:600
     }
+
   ];
 }
 
