@@ -1,46 +1,56 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
-import csv
+import pandas as pd
 import os
 
 app = Flask(__name__)
-CORS(app)
 
-if not os.path.exists('dados.csv'):
-    with open('dados.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow([
-            "participant",
-            "tempo_resposta",
-            "acerto",
-            "set_size",
-            "target",
-            "difficulty",
-            "invalid",
-            "total_time"
-        ])
+FILE = "dados.csv"
 
-@app.route('/save', methods=['POST'])
-def save_data():
+# salvar dados
+@app.route("/save", methods=["POST"])
+def save():
     data = request.json
 
-    with open('dados.csv', 'a', newline='') as f:
-        writer = csv.writer(f)
+    df = pd.DataFrame(data)
 
-        for trial in data:
-            writer.writerow([
-                trial.get("participant"),
-                trial.get("rt"),
-                trial.get("correct"),
-                trial.get("set_size"),
-                trial.get("target"),
-                trial.get("difficulty"),
-                trial.get("invalid"),
-                trial.get("total_time")
-            ])
+    if os.path.exists(FILE):
+        df.to_csv(FILE, mode="a", header=False, index=False)
+    else:
+        df.to_csv(FILE, index=False)
 
-    return jsonify({"status": "success"})
+    return jsonify({"status": "ok"})
 
-@app.route('/')
-def home():
-    return "API funcionando!"
+
+# ver dados
+@app.route("/data", methods=["GET"])
+def data():
+    if not os.path.exists(FILE):
+        return jsonify([])
+
+    df = pd.read_csv(FILE)
+    return df.to_dict(orient="records")
+
+
+# limpar dados
+@app.route("/clear", methods=["POST"])
+def clear():
+    open(FILE, "w").close()
+    return jsonify({"status": "apagado"})
+
+
+# filtrar só dados reais
+@app.route("/data/clean", methods=["GET"])
+def clean():
+    if not os.path.exists(FILE):
+        return jsonify([])
+
+    df = pd.read_csv(FILE)
+
+    if "teste" in df.columns:
+        df = df[df["teste"] == False]
+
+    return df.to_dict(orient="records")
+
+
+if __name__ == "__main__":
+    app.run()

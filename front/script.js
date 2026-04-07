@@ -1,5 +1,8 @@
 const urlParams = new URLSearchParams(window.location.search);
 
+// 🔥 identifica se é teste local
+const isTest = window.location.hostname === "localhost";
+
 const perfil = {
   id: urlParams.get("id"),
   idade: urlParams.get("idade"),
@@ -10,7 +13,7 @@ const perfil = {
   oculos: urlParams.get("oculos")
 };
 
-let total_trials = 0;
+let total_trials = 1; // evita divisão por zero
 
 const jsPsych = initJsPsych({
   display_element: "jspsych-target",
@@ -18,28 +21,33 @@ const jsPsych = initJsPsych({
   on_finish: salvar
 });
 
+// progresso
 function updateProgress() {
   const current = jsPsych.data.get().count();
   const percent = Math.min((current / total_trials) * 100, 100);
-  document.getElementById("progress").style.width = percent + "%";
+  const bar = document.getElementById("progress");
+  if (bar) bar.style.width = percent + "%";
 }
 
-// 🔥 ESTÍMULOS MELHORADOS
+// estímulos
 function generateStimuli(size, target, difficulty, distraction) {
 
   let elements = [];
   const cols = Math.ceil(Math.sqrt(size));
 
   for (let i = 0; i < size; i++) {
-    elements.push(`<div>${difficulty === "hard" ? "I" : "L"}</div>`);
+    elements.push(`
+      <div style="font-size:clamp(14px,2vw,22px)">
+        ${difficulty === "hard" ? "I" : "L"}
+      </div>
+    `);
   }
 
   if (target) {
     const i = Math.floor(Math.random() * size);
-    elements[i] = `<div>T</div>`; // SEM COR ESPECIAL
+    elements[i] = `<div style="font-size:clamp(14px,2vw,22px)">T</div>`;
   }
 
-  // 🔥 estímulos periféricos
   let distractions = "";
 
   if (distraction) {
@@ -50,10 +58,10 @@ function generateStimuli(size, target, difficulty, distraction) {
           width:60px;
           height:60px;
           border-radius:50%;
-          background:rgba(255,0,0,0.2);
+          background:rgba(255,0,0,0.15);
           top:${Math.random()*100}%;
           left:${Math.random()*100}%;
-          animation: pulse 1s infinite;
+          animation:pulse 1s infinite;
         "></div>
       `;
     }
@@ -62,18 +70,25 @@ function generateStimuli(size, target, difficulty, distraction) {
   return `
   <style>
     @keyframes pulse {
-      50% { transform: scale(1.5); opacity:0.2; }
+      50% { transform: scale(1.4); opacity:0.3; }
     }
   </style>
 
-  <div style="position:relative; height:100vh; display:flex; justify-content:center; align-items:center;">
+  <div style="
+    position:relative;
+    height:80vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+  ">
 
     ${distractions}
 
     <div style="
       display:grid;
       grid-template-columns: repeat(${cols},1fr);
-      gap:6px;
+      gap:5px;
       width:90vw;
       max-width:500px;
       z-index:2;
@@ -101,10 +116,13 @@ function createTrial(size, target, difficulty, distraction) {
       choices: ["f","j"],
       trial_duration: 3000,
       data: { size, target, difficulty, distraction },
+
       on_finish: function(data){
 
+        // sem resposta
         if (data.response === null) {
           data.no_response = true;
+          data.correct = false;
           return;
         }
 
@@ -128,7 +146,7 @@ function createTrial(size, target, difficulty, distraction) {
   ];
 }
 
-// 🔥 BLOCO COM RANDOMIZAÇÃO REAL
+// blocos
 function createBlock(distraction, label){
 
   let block = [];
@@ -149,7 +167,7 @@ function createBlock(distraction, label){
     });
   });
 
-  // 🔥 RANDOMIZA
+  // 🔥 randomização real
   trials = trials.sort(() => Math.random() - 0.5);
 
   return block.concat(trials);
@@ -158,7 +176,7 @@ function createBlock(distraction, label){
 // timeline
 let timeline = [];
 
-// botão iniciar
+// botão start
 timeline.push({
   type: jsPsychHtmlButtonResponse,
   stimulus: "<h2>Preparado?</h2>",
@@ -198,15 +216,21 @@ total_trials = timeline.length;
 function salvar(){
 
   let dados = jsPsych.data.get().values();
-  dados = dados.map(d => ({ ...d, ...perfil }));
 
-  fetch("https://buscavisual.onrender.com/save",{
+  dados = dados.map(d => ({
+    ...d,
+    ...perfil,
+    teste: isTest
+  }));
+
+  // 🔥 IMPORTANTE (corrigido)
+  fetch("/save",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify(dados)
   });
 
-  document.body.innerHTML = "<h2>Obrigado!</h2>";
+  document.body.innerHTML = "<h2>Obrigado pela participação!</h2>";
 }
 
 jsPsych.run(timeline);
