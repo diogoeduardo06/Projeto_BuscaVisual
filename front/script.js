@@ -223,8 +223,7 @@ function salvar(){
     teste: isTest
   }));
 
-  // 🔥 IMPORTANTE (corrigido)
-  fetch("/save",{
+  fetch("https://buscavisual-api.onrender.com/save",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify(dados)

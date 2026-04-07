@@ -24,14 +24,20 @@
     }
 
     button {
-      margin-top:20px;
-      padding:15px 30px;
+      display:block;
+      width:100%;
+      margin:15px 0;
+      padding:15px;
       font-size:18px;
       border:none;
       border-radius:10px;
       background:#22c55e;
       color:white;
       cursor:pointer;
+    }
+
+    button.secondary {
+      background:#3b82f6;
     }
 
     button:hover {
@@ -43,16 +49,22 @@
 <body>
 
 <div class="box">
-  <h1>Experimento de Busca Visual</h1>
-  <p>Você será direcionado para um formulário antes do teste.</p>
+  <h1>Busca Visual</h1>
 
-  <button onclick="start()">Iniciar</button>
+  <button onclick="goForm()">Preencher Formulário</button>
+  <button class="secondary" onclick="startDirect()">Ir direto para o teste</button>
 </div>
 
 <script>
-function start(){
-  window.location.href = "/form.html";
+function goForm(){
+  window.location.href = "/forms.html";
+}
+
+function startDirect(){
+  const id = "P" + Math.floor(Math.random()*100000);
+  window.location.href = "/index.html?id=" + id;
 }
 </script>
+
 </body>
 </html>
