@@ -97,7 +97,21 @@ setSizes.forEach(size => {
 });
 
 // Randomização
-timeline = jsPsych.randomization.shuffle(timeline);
+let trials = [];
+
+setSizes.forEach(size => {
+  difficulties.forEach(diff => {
+    for (let i = 0; i < repeticoes; i++) {
+      trials.push(createTrial(size, true, diff));
+      trials.push(createTrial(size, false, diff));
+    }
+  });
+});
+
+trials = jsPsych.randomization.shuffle(trials);
+
+// mantém instruções e treino no início
+timeline = timeline.concat(trials);
 
 // Finalização
 const jsPsych = initJsPsych({
