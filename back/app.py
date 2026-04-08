@@ -27,6 +27,12 @@ def data():
         return jsonify([])
     return pd.read_csv(FILE).to_dict(orient="records")
 
+@app.route("/reset", methods=["DELETE"])
+def reset():
+    if os.path.exists(FILE):
+        open(FILE, "w").close()  # limpa o conteúdo do CSV
+    return jsonify({"status": "dados apagados"})
+
 
 if __name__ == "__main__":
     app.run()
