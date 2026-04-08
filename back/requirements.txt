@@ -1,4 +1,4 @@
 flask
-pandas
 flask-cors
-gunicorn
+pandas
+psycopg2-binary
