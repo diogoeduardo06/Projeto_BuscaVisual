@@ -27,7 +27,7 @@ def data():
         return jsonify([])
     return pd.read_csv(FILE).to_dict(orient="records")
 
-@app.route("/reset", methods=["DELETE"])
+@app.route("/reset", methods=["POST", "GET"])
 def reset():
     if os.path.exists(FILE):
         open(FILE, "w").close()  # limpa o CSV
