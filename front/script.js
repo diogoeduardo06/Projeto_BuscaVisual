@@ -79,77 +79,89 @@ function generateStimuli(size, target, difficulty, distraction){
 
 // TRIAL
 function createTrial(size, target, difficulty, distraction, blockIndex, trialIndex){
-  return [
-    {
-      type:"html-keyboard-response",
-      stimulus:generateStimuli(size,target,difficulty,distraction),
-      choices:["f","j"],
-      data:{
-        task: true, // 🔥 identifica trial válido
-        size, target, difficulty, distraction,
-        block:blockIndex, trial:trialIndex
-      },
-      on_finish:function(data){
-        if(data.response === null){
-          data.correct = null;
-        } else {
-          data.correct =
-            (data.response === "j" && data.target) ||
-            (data.response === "f" && !data.target);
-        }
-        data.timestamp = Date.now();
-      }
-    },
-    {
-      type:"html-keyboard-response",
-      stimulus:function(){
-        const d = jsPsych.data.get().last(1).values()[0];
 
-        if(d.correct === null){
-          return "<p style='color:orange'>Sem resposta</p>";
-        }
-        return d.correct
-          ? "<p style='color:green'>Correto</p>"
-          : "<p style='color:red'>Errado</p>";
-      },
-      choices: jsPsych.NO_KEYS,
-      trial_duration:400
+  return {
+    type:"html-keyboard-response",
+    stimulus:generateStimuli(size,target,difficulty,distraction),
+    choices:["f","j"],
+    data:{
+      task:true,
+      size, target, difficulty, distraction,
+      block:blockIndex, trial:trialIndex
+    },
+    on_finish:function(data){
+
+      if(data.response === null){
+        data.correct = null;
+      } else {
+        data.correct =
+          (data.response === "j" && data.target) ||
+          (data.response === "f" && !data.target);
+      }
+
+      data.timestamp = Date.now();
     }
-  ];
+  };
 }
 
 // BLOCO
 function createBlock(distraction,label,blockIndex){
-  let block = [{
-    type:"html-keyboard-response",
-    stimulus:`<h2>${label}</h2><p>Pressione qualquer tecla</p>`
-  }];
+
+  let block = [
+    {
+      type:"html-keyboard-response",
+      stimulus:`
+      <div style="text-align:center">
+        <h2>${label}</h2>
+        <p>Pressione qualquer tecla para iniciar</p>
+      </div>`
+    }
+  ];
 
   let sizes = [10,20,30];
   let difficulties = ["easy","hard"];
 
   let trials = [];
+  let trialCounter = 0;
 
   sizes.forEach(size=>{
     difficulties.forEach(diff=>{
-      [true,false].forEach(target=>{
-        trials.push(createTrial(size,target,diff,distraction,blockIndex,trials.length));
+      let conditions = jsPsych.randomization.shuffle([true,false]);
+
+      conditions.forEach(target=>{
+        trials.push(
+          createTrial(size,target,diff,distraction,blockIndex,trialCounter)
+        );
+        trialCounter++;
       });
     });
   });
 
-  return block.concat(jsPsych.randomization.shuffle(trials).flat());
+  return block.concat(trials);
 }
 
 // TIMELINE
 let timeline = [];
 
+// INSTRUÇÕES
 timeline.push({
   type:"html-button-response",
-  stimulus:"<h2>Preparado?</h2>",
+  stimulus:`
+  <div style="max-width:600px;margin:auto;text-align:left">
+    <h2>Instruções</h2>
+    <p><b>Seu objetivo:</b> identificar se a letra <b>T</b> está presente.</p>
+    <p><b>Teclas:</b></p>
+    <ul>
+      <li><b>J</b> → T presente</li>
+      <li><b>F</b> → T ausente</li>
+    </ul>
+    <p>Responda o mais rápido e preciso possível.</p>
+  </div>
+  `,
   choices:["Começar"]
 });
 
+// countdown
 ["3","2","1"].forEach(t=>{
   timeline.push({
     type:"html-keyboard-response",
@@ -159,21 +171,29 @@ timeline.push({
   });
 });
 
+// blocos
 let blocos = Math.random()>0.5
   ? [createBlock(false,"Sem estímulo",0), createBlock(true,"Com estímulo",1)]
   : [createBlock(true,"Com estímulo",0), createBlock(false,"Sem estímulo",1)];
 
 blocos.forEach((b,i)=>{
   timeline = timeline.concat(b);
+
   if(i===0){
-    timeline.push({type:"html-keyboard-response", stimulus:"<h2>Pausa</h2>"});
+    timeline.push({
+      type:"html-keyboard-response",
+      stimulus:`
+      <div style="text-align:center">
+        <h2>Pausa</h2>
+        <p>Pressione qualquer tecla para continuar</p>
+      </div>`
+    });
   }
 });
 
-// SALVAR (🔥 CORRIGIDO)
+// SALVAR
 async function salvar(){
 
-  // 🔥 FILTRO: só trials reais
   let dados = jsPsych.data.get().filter({task:true}).values();
 
   let dadosLimpos = dados.map(d => ({
@@ -202,7 +222,7 @@ async function salvar(){
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify(dadosLimpos)
     });
-    document.body.innerHTML = "<h2>Obrigado!</h2>";
+    document.body.innerHTML = "<h2>Obrigado pela participação!</h2>";
   } catch(e){
     console.error(e);
     document.body.innerHTML = "<h2>Erro ao salvar</h2>";

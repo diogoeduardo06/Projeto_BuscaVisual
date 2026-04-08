@@ -28,7 +28,6 @@ def data():
     return pd.read_csv(FILE).to_dict(orient="records")
 
 
-# 🔥 RESET LIMPO
 @app.route("/reset", methods=["POST"])
 def reset():
     if os.path.exists(FILE):
@@ -36,7 +35,6 @@ def reset():
     return jsonify({"status": "resetado"})
 
 
-# 🔥 DOWNLOAD CSV
 @app.route("/download", methods=["GET"])
 def download():
     if not os.path.exists(FILE):
@@ -45,4 +43,4 @@ def download():
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run() 
