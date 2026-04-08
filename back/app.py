@@ -27,11 +27,11 @@ def data():
         return jsonify([])
     return pd.read_csv(FILE).to_dict(orient="records")
 
-@app.route("/reset", methods=["POST", "GET"])
+@app.route("/reset", methods=["GET","POST"])
 def reset():
     if os.path.exists(FILE):
-        open(FILE, "w").close()  # limpa o CSV
-    return jsonify({"status": "dados apagados"})
+        os.remove(FILE)
+    return jsonify({"status": "resetado"})
 
 
 if __name__ == "__main__":
