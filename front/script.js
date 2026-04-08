@@ -5,9 +5,9 @@ const urlParams = new URLSearchParams(window.location.search);
 
 const perfil = {
   id: urlParams.get("id") || ("P" + Math.floor(Math.random()*100000)),
-  idade: urlParams.get("idade"),
+  idade: Number(urlParams.get("idade")),
   sexo: urlParams.get("sexo"),
-  sono: urlParams.get("sono"),
+  sono: Number(urlParams.get("sono")),
   cafeina: urlParams.get("cafeina"),
   jogos: urlParams.get("jogos"),
   oculos: urlParams.get("oculos"),
@@ -22,11 +22,11 @@ function generateStimuli(size, target, difficulty, distraction){
   const hardDistractors = ["I","L","F"];
 
   for(let i=0;i<size;i++){
-    if(difficulty === "easy"){
-      elements.push(easyDistractors[Math.floor(Math.random()*easyDistractors.length)]);
-    } else {
-      elements.push(hardDistractors[Math.floor(Math.random()*hardDistractors.length)]);
-    }
+    elements.push(
+      difficulty === "easy"
+        ? easyDistractors[Math.floor(Math.random()*easyDistractors.length)]
+        : hardDistractors[Math.floor(Math.random()*hardDistractors.length)]
+    );
   }
 
   if(target){
@@ -36,8 +36,8 @@ function generateStimuli(size, target, difficulty, distraction){
 
   let visualDistractors = "";
   if(distraction){
-    const nDistractors = difficulty === "easy" ? 5 : 12;
-    for(let i=0;i<nDistractors;i++){
+    const n = difficulty === "easy" ? 5 : 12;
+    for(let i=0;i<n;i++){
       visualDistractors += `
       <div style="
         position:absolute;
@@ -77,22 +77,25 @@ function generateStimuli(size, target, difficulty, distraction){
   </div>`;
 }
 
-// CRIAR TRIAL
+// TRIAL
 function createTrial(size, target, difficulty, distraction, blockIndex, trialIndex){
   return [
     {
       type:"html-keyboard-response",
       stimulus:generateStimuli(size,target,difficulty,distraction),
       choices:["f","j"],
-      response_ends_trial: true,
       data:{
-        size, target, difficulty, distraction, block:blockIndex, trial:trialIndex
+        task: true, // 🔥 identifica trial válido
+        size, target, difficulty, distraction,
+        block:blockIndex, trial:trialIndex
       },
       on_finish:function(data){
         if(data.response === null){
-          data.correct = null; // sem resposta
+          data.correct = null;
         } else {
-          data.correct = (data.response === "j" && data.target) || (data.response === "f" && !data.target);
+          data.correct =
+            (data.response === "j" && data.target) ||
+            (data.response === "f" && !data.target);
         }
         data.timestamp = Date.now();
       }
@@ -101,10 +104,13 @@ function createTrial(size, target, difficulty, distraction, blockIndex, trialInd
       type:"html-keyboard-response",
       stimulus:function(){
         const d = jsPsych.data.get().last(1).values()[0];
+
         if(d.correct === null){
           return "<p style='color:orange'>Sem resposta</p>";
         }
-        return d.correct ? "<p style='color:green'>Correto</p>" : "<p style='color:red'>Errado</p>";
+        return d.correct
+          ? "<p style='color:green'>Correto</p>"
+          : "<p style='color:red'>Errado</p>";
       },
       choices: jsPsych.NO_KEYS,
       trial_duration:400
@@ -112,19 +118,18 @@ function createTrial(size, target, difficulty, distraction, blockIndex, trialInd
   ];
 }
 
-// CRIAR BLOCO COM DIFICULDADE GRADATIVA E RANDOMIZAÇÃO CONTROLADA
+// BLOCO
 function createBlock(distraction,label,blockIndex){
   let block = [{
     type:"html-keyboard-response",
     stimulus:`<h2>${label}</h2><p>Pressione qualquer tecla</p>`
   }];
 
-  let sizes = [10,20,30]; // pequeno -> grande
-  let difficulties = ["easy","hard"]; // fácil -> difícil
+  let sizes = [10,20,30];
+  let difficulties = ["easy","hard"];
 
   let trials = [];
 
-  // gerar trials por dificuldade e tamanho
   sizes.forEach(size=>{
     difficulties.forEach(diff=>{
       [true,false].forEach(target=>{
@@ -133,13 +138,7 @@ function createBlock(distraction,label,blockIndex){
     });
   });
 
-  // embaralhar dentro de cada nível de dificuldade
-  let shuffled = [];
-  trials.forEach(trialGroup=>{
-    shuffled.push(...trialGroup.sort(()=>Math.random()-0.5));
-  });
-
-  return block.concat(shuffled);
+  return block.concat(jsPsych.randomization.shuffle(trials).flat());
 }
 
 // TIMELINE
@@ -151,7 +150,6 @@ timeline.push({
   choices:["Começar"]
 });
 
-// countdown
 ["3","2","1"].forEach(t=>{
   timeline.push({
     type:"html-keyboard-response",
@@ -161,7 +159,6 @@ timeline.push({
   });
 });
 
-// ordem aleatória dos blocos (com e sem estímulos)
 let blocos = Math.random()>0.5
   ? [createBlock(false,"Sem estímulo",0), createBlock(true,"Com estímulo",1)]
   : [createBlock(true,"Com estímulo",0), createBlock(false,"Sem estímulo",1)];
@@ -173,10 +170,13 @@ blocos.forEach((b,i)=>{
   }
 });
 
-// SALVAR
+// SALVAR (🔥 CORRIGIDO)
 async function salvar(){
-  // salva apenas os campos relevantes
-  let dados = jsPsych.data.get().values().map(d => ({
+
+  // 🔥 FILTRO: só trials reais
+  let dados = jsPsych.data.get().filter({task:true}).values();
+
+  let dadosLimpos = dados.map(d => ({
     id: perfil.id,
     idade: perfil.idade,
     sexo: perfil.sexo,
@@ -191,7 +191,7 @@ async function salvar(){
     distraction: d.distraction,
     target: d.target,
     response: d.response,
-    correct: d.correct === undefined ? null : d.correct,
+    correct: d.correct,
     rt: d.rt,
     timestamp: d.timestamp
   }));
@@ -200,16 +200,15 @@ async function salvar(){
     await fetch(BACKEND_URL + "/save", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify(dados)
+      body: JSON.stringify(dadosLimpos)
     });
     document.body.innerHTML = "<h2>Obrigado!</h2>";
   } catch(e){
-    console.error("Erro ao salvar dados:", e);
-    document.body.innerHTML = "<h2>Erro ao enviar dados. Tente novamente.</h2>";
+    console.error(e);
+    document.body.innerHTML = "<h2>Erro ao salvar</h2>";
   }
 }
 
-// INICIAR
 jsPsych.init({
   display_element:"jspsych-target",
   timeline: timeline,
