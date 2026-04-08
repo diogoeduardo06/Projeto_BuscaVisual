@@ -30,7 +30,7 @@ def data():
 @app.route("/reset", methods=["DELETE"])
 def reset():
     if os.path.exists(FILE):
-        open(FILE, "w").close()  # limpa o conteúdo do CSV
+        open(FILE, "w").close()  # limpa o CSV
     return jsonify({"status": "dados apagados"})
 
 
