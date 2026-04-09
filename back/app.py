@@ -2,6 +2,9 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import psycopg2
 import os
+from flask import Response
+import csv
+import io
 
 app = Flask(__name__)
 CORS(app)
@@ -103,6 +106,57 @@ def data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/download", methods=["GET"])
+def download_csv():
+    try:
+        create_table()
+
+        conn = get_conn()
+        cur = conn.cursor()
+
+        cur.execute("SELECT * FROM resultados")
+        rows = cur.fetchall()
+
+        cols = [
+            "id","idade","sexo","sono","cafeina","jogos","oculos",
+            "block","trial","size","difficulty","distraction",
+            "target","response","correct","rt","timestamp"
+        ]
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        writer.writerow(cols)
+        writer.writerows(rows)
+
+        cur.close()
+        conn.close()
+
+        return Response(
+            output.getvalue(),
+            mimetype="text/csv",
+            headers={"Content-Disposition": "attachment;filename=dados.csv"}
+        )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/reset", methods=["POST"])
+def reset():
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+
+        cur.execute("DELETE FROM resultados")
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({"status": "resetado"})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run()
