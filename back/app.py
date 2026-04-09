@@ -7,17 +7,26 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# conexão com banco (Render injeta DATABASE_URL automaticamente)
+# pega a URL do banco do Render
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-def get_conn():
-    return psycopg2.connect(DATABASE_URL)
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL não encontrada. Configure no Render.")
 
-# criar tabela automaticamente (caso não exista)
-def create_table():
+# conexão segura com PostgreSQL
+def get_conn():
+    return psycopg2.connect(DATABASE_URL, sslmode='require')
+
+
+# SALVAR DADOS
+@app.route("/save", methods=["POST"])
+def save():
+    data = request.json
+
     conn = get_conn()
     cur = conn.cursor()
 
+    # cria tabela automaticamente se não existir
     cur.execute("""
     CREATE TABLE IF NOT EXISTS resultados (
         id TEXT,
@@ -40,20 +49,7 @@ def create_table():
     )
     """)
 
-    conn.commit()
-    cur.close()
-    conn.close()
-
-create_table()
-
-# salvar dados
-@app.route("/save", methods=["POST"])
-def save():
-    data = request.json
-
-    conn = get_conn()
-    cur = conn.cursor()
-
+    # insere os dados
     for row in data:
         cur.execute("""
         INSERT INTO resultados VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
@@ -84,7 +80,7 @@ def save():
     return jsonify({"status": "ok"})
 
 
-# visualizar dados
+# VER DADOS
 @app.route("/data", methods=["GET"])
 def data():
     conn = get_conn()
@@ -93,7 +89,7 @@ def data():
     return df.to_dict(orient="records")
 
 
-# resetar dados (cuidado!)
+# RESETAR BANCO
 @app.route("/reset", methods=["POST"])
 def reset():
     conn = get_conn()
@@ -103,22 +99,6 @@ def reset():
     cur.close()
     conn.close()
     return jsonify({"status": "resetado"})
-
-
-# exportar CSV
-@app.route("/download", methods=["GET"])
-def download():
-    conn = get_conn()
-    df = pd.read_sql("SELECT * FROM resultados", conn)
-    conn.close()
-
-    file_path = "export.csv"
-    df.to_csv(file_path, index=False)
-
-    return jsonify({
-        "status": "ok",
-        "message": "Arquivo gerado como export.csv no servidor"
-    })
 
 
 if __name__ == "__main__":
