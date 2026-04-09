@@ -189,8 +189,8 @@ timeline.push({
     <p><b>Seu objetivo:</b> identificar se a letra <b>T</b> está presente.</p>
     <p><b>Teclas:</b></p>
     <ul>
-      <li><b>J</b> → T presente</li>
-      <li><b>F</b> → T ausente</li>
+      <li><b>J </b> → Se houver T</li>
+      <li><b>F </b> → Se não houver T</li>
     </ul>
     <p>Responda o mais rápido e preciso possível.</p>
   </div>
@@ -233,6 +233,19 @@ async function salvar() {
 
   let dados = jsPsych.data.get().filter({ task: true }).values();
 
+  // métricas
+  let validos = dados.filter(d => d.rt !== null);
+
+  let media = arr => arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(0) : 0;
+
+  let comEstimulo = validos.filter(d => d.distraction === true).map(d => d.rt);
+  let semEstimulo = validos.filter(d => d.distraction === false).map(d => d.rt);
+
+  let acertos = validos.filter(d => d.correct === true).length;
+  let total = validos.length;
+
+  let acc = total ? ((acertos/total)*100).toFixed(1) : 0;
+
   let dadosLimpos = dados.map(d => ({
     id: perfil.id,
     idade: perfil.idade,
@@ -259,7 +272,48 @@ async function salvar() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(dadosLimpos)
     });
-    document.body.innerHTML = "<h2>Obrigado pela participação!</h2>";
+
+    // TELA FINAL BONITA
+    document.body.innerHTML = `
+    <div style="
+      font-family:Arial;
+      text-align:center;
+      background:#0f172a;
+      color:white;
+      height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    ">
+      <div style="
+        background:#1e293b;
+        padding:30px;
+        border-radius:12px;
+        width:400px;
+        box-shadow:0 0 20px rgba(0,0,0,0.4);
+      ">
+        <h2 style="margin-bottom:10px;">Obrigado pela participação!</h2>
+        <p style="margin-bottom:20px;color:#94a3b8;">Seus resultados:</p>
+
+        <div style="text-align:left;font-size:14px;line-height:1.8">
+
+          <p><b>Tempo médio (sem estímulo):</b> ${media(semEstimulo)} ms</p>
+          <p><b>Tempo médio (com estímulo):</b> ${media(comEstimulo)} ms</p>
+
+          <p><b>Precisão:</b> ${acc}%</p>
+          <p><b>Total de respostas:</b> ${total}</p>
+
+        </div>
+
+        <hr style="margin:20px 0;border:0;border-top:1px solid #334155">
+
+        <p style="font-size:12px;color:#64748b;">
+          Obrigado por contribuir com a pesquisa 🙌
+        </p>
+      </div>
+    </div>
+    `;
+
   } catch (e) {
     console.error(e);
     document.body.innerHTML = "<h2>Erro ao salvar</h2>";
