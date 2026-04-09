@@ -141,7 +141,7 @@ def download_csv():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@app.route("/reset", methods=["POST"])
+@app.route("/reset", methods=["POST", "GET"])
 def reset():
     try:
         conn = get_conn()
